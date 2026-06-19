@@ -1,0 +1,25 @@
+# Sensitive recovery artifacts — never commit
+artifacts/wallet.dat
+artifacts/*.wallet
+artifacts/*.dat
+artifacts/target-address.txt
+hashes/
+generated/
+runs/autosave/
+runs/logs/*.log
+runs/hashcat-sessions/
+runs/hashcat.potfile
+
+# Token files may contain password fragments
+tokens/tier1_high_confidence.txt
+tokens/tier2_variations.txt
+tokens/tier3_typos.txt
+tokens/seed_tokens.txt
+
+# Tools and dependencies
+tools/btcrecover/
+tools/hashcat/
+__pycache__/
+*.pyc
+.venv/
+venv/
