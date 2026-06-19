@@ -1,0 +1,5 @@
+# Minimal example for --listpass dry-run only (delete before real recovery)
+# Demonstrates two-token combination: "doge" + "2014" => doge2014
+
+^doge
+2014
