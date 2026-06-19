@@ -82,8 +82,8 @@ call :require_hashcat
 call :require_hash
 
 set "CANDIDATES=%GENERATED%\candidates-tier%TIER%.txt"
-set "LOG=%LOG_DIR%\gpu-tier%TIER%-%DATE:~-4%%DATE:~4,2%%DATE:~7,2%-%TIME:~0,2%%TIME:~3,2%%TIME:~6,2%.log"
-set "LOG=%LOG: =0%"
+set "LOG_TIME=%TIME: =0%"
+set "LOG=%LOG_DIR%\gpu-tier%TIER%-%DATE:~-4%%DATE:~4,2%%DATE:~7,2%-%LOG_TIME:~0,2%%LOG_TIME:~3,2%%LOG_TIME:~6,2%.log"
 
 echo === Tier %TIER%: generate candidates (CPU) then crack on GPU ===
 echo Token file: %TOKEN_FILE%
@@ -91,7 +91,7 @@ echo Output:     %CANDIDATES%
 echo.
 
 echo [1/3] Counting candidates...
-python "%BTCRECOVER%" --listpass --tokenlist "%TOKEN_FILE%" --dsw > "%CANDIDATES%.tmp" 2>nul
+python "%BTCRECOVER%" --listpass --tokenlist "%TOKEN_FILE%" > "%CANDIDATES%.tmp" 2>nul
 for /f %%C in ('find /c /v "" ^< "%CANDIDATES%.tmp"') do set "COUNT=%%C"
 echo       %COUNT% passwords to test
 if %COUNT% GTR 5000000 (

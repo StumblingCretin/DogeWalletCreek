@@ -101,7 +101,7 @@ switch ($Mode) {
         if (-not (Test-Path $tokenFile)) { Write-Error "Token file not found: $tokenFile" }
 
         Write-Host "Generating candidates from tier $Tier (CPU)..."
-        & python $btcrecover --listpass --tokenlist $tokenFile --dsw 2>&1 |
+        & python $btcrecover --listpass --tokenlist $tokenFile 2>&1 |
             Out-File -FilePath $candidates -Encoding utf8
 
         $count = (Get-Content $candidates | Measure-Object -Line).Lines

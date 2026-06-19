@@ -15,4 +15,4 @@ if (-not (Test-Path $btcrecover)) {
 }
 
 Write-Host "=== Dry-run: example token combinations ===" -ForegroundColor Cyan
-python $btcrecover --listpass --tokenlist $tokenFile --dsw 2>&1
+python $btcrecover --listpass --tokenlist $tokenFile 2>&1
