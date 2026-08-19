@@ -1,16 +1,30 @@
 @echo off
 REM Shared hashcat GPU profile for NVIDIA RTX 2070 (Turing, 8 GB VRAM).
-REM Included by run-gpu-recovery.bat — do not run directly unless debugging.
+REM Included by run-gpu-recovery.bat - do not run directly unless debugging.
 
 REM Resolve project root (this file lives in scripts\)
 set "PROJECT_ROOT=%~dp0.."
 for %%I in ("%PROJECT_ROOT%") do set "PROJECT_ROOT=%%~fI"
 
-REM hashcat binary — prefer project-local install
-if exist "%PROJECT_ROOT%\tools\hashcat\hashcat.exe" (
-    set "HASHCAT=%PROJECT_ROOT%\tools\hashcat\hashcat.exe"
+REM hashcat binary - prefer project-local install
+set "HASHCAT_DIR=%PROJECT_ROOT%\tools\hashcat"
+if exist "%HASHCAT_DIR%\hashcat.exe" (
+    set "HASHCAT=%HASHCAT_DIR%\hashcat.exe"
 ) else (
     set "HASHCAT=hashcat.exe"
+)
+
+REM Python binary / launcher
+where python >nul 2>&1
+if not errorlevel 1 (
+    set "PYTHON_CMD=python"
+) else (
+    where py >nul 2>&1
+    if not errorlevel 1 (
+        set "PYTHON_CMD=py"
+    ) else (
+        set "PYTHON_CMD=python"
+    )
 )
 
 set "HASH_FILE=%PROJECT_ROOT%\hashes\wallet.hash"
@@ -28,13 +42,13 @@ set "HC_MODE=-m 11300"
 
 REM RTX 2070 defaults:
 REM   -D 2     GPU backends only (skip CPU OpenCL)
-REM   -w 4     Nightmare workload — max throughput (expect brief UI lag)
+REM   -w 4     Nightmare workload - max throughput (expect brief UI lag)
 REM   -O       Optimized kernels (faster for typical wallet passphrases)
 REM   --status Timer updates every 15 s
 set "HC_GPU=-D 2 -w 4 -O --status --status-timer=15"
 
 REM Session + potfile kept inside project (not hashcat install dir)
-set "HC_PERSIST=--potfile-path \"%POTFILE%\" --session doge-gpu --session-file \"%SESSION_DIR%\doge-gpu.restore\""
+set "HC_PERSIST=--potfile-path "%POTFILE%" --session doge-gpu"
 
 REM Combined flags used by all GPU attack commands
 set "HC_FLAGS=%HC_MODE% %HC_GPU% %HC_PERSIST%"

@@ -1,78 +1,60 @@
-# Bitdefender exclusions for wallet recovery
+# Bitdefender Whitelisting Guide
 
-BTCRecover, bitcoin2john, and hashcat are legitimate recovery tools. Antivirus products flag them because they decrypt wallets and test password candidates — the same behavior as malware password stealers.
+Bitdefender often flags `tools/hashcat/hashcat.exe` and `tools/btcrecover/` as `Gen:Variant.Lazy`, `HackTool`, or `CoinMiner` false positives.
 
-## Recommended: one folder exclusion
+Follow these steps to prevent Bitdefender from blocking or deleting files during recovery.
 
-Add this folder and enable **Antivirus**, **Online Threat Prevention**, and **Advanced Threat Defense** (if shown):
+---
 
-```
-C:\Users\Jig\dogecoin-recovery
-```
+## 1. Antivirus Folder Exception (Full Project)
 
-This covers scripts, tools, wallet copies, hashes, and run output in one step.
+1. Open **Bitdefender**.
+2. Go to **Protection** (shield icon on the left).
+3. Under **Antivirus**, click **Open** (or the settings gear).
+4. Click the **Exceptions** (or **Exclusions**) tab.
+5. Click **+ Add Exception**.
+6. Set path to the project root folder:
+   ```
+   C:\path\to\dogecoin-recovery
+   ```
+7. Enable both toggles:
+   - **Antivirus**: ON
+   - **Advanced Threat Defense (ATD)**: ON
+8. Click **Save**.
 
-## Optional: granular folder exclusions
+---
 
-```
-C:\Users\Jig\dogecoin-recovery\tools
-C:\Users\Jig\dogecoin-recovery\scripts
-C:\Users\Jig\dogecoin-recovery\artifacts
-C:\Users\Jig\dogecoin-recovery\hashes
-C:\Users\Jig\dogecoin-recovery\generated
-C:\Users\Jig\dogecoin-recovery\runs
-```
+## 2. Advanced Threat Defense (ATD) Application Exceptions
 
-## Process exclusions (Advanced Threat Defense)
+If Bitdefender blocks process execution while running attacks, add process exceptions:
 
-ADT only accepts `.exe` files. Add under **Protection → Advanced Threat Defense → Settings → Manage exceptions**:
+1. In Bitdefender, go to **Protection** → **Advanced Threat Defense** → **Settings**.
+2. Under **Manage Exceptions**, click **+ Add an exception**.
+3. Add the following binaries:
+   ```
+   C:\path\to\dogecoin-recovery\tools\hashcat\hashcat.exe
+   C:\path\to\dogecoin-recovery\run-gpu-recovery.bat
+   ```
+4. Set protection level to **Excluded** and save.
 
-```
-C:\Python313\python.exe
-```
+---
 
-Also add after you install hashcat:
+## 3. If Bitdefender Already Quarantined a File
 
-```
-C:\Users\Jig\dogecoin-recovery\tools\hashcat\hashcat.exe
-C:\Users\Jig\dogecoin-recovery\run-gpu-recovery.bat
-```
+If `hashcat.exe` or `btcrecover.py` disappeared:
 
-Do **not** globally exclude `powershell.exe` — the project folder exclusion is enough for recovery scripts.
+1. In Bitdefender, go to **Protection** → **Antivirus** → **Quarantine**.
+2. Find the quarantined file (`hashcat.exe` or python script).
+3. Click **Restore** (or **Restore and Add Exception**).
+4. Re-verify the file is back:
+   ```powershell
+   Test-Path tools\hashcat\hashcat.exe
+   ```
 
-## Step-by-step (Bitdefender on Windows)
+---
 
-### Folder / file exclusions
+## 4. Post-Recovery Cleanup
 
-1. Open **Bitdefender**
-2. **Protection** → **Antivirus** → **Open**
-3. **Settings** tab → **Manage exceptions**
-4. **+ Add exception** → **Folder** → `C:\Users\Jig\dogecoin-recovery`
-5. Turn on **Antivirus** (and other modules if listed)
-6. **Save**
-
-### Process exclusions
-
-1. **Protection** → **Advanced Threat Defense** → **Open**
-2. **Settings** → **Manage exceptions**
-3. Add `python.exe` (full path from `where.exe python`)
-4. **Save**
-
-If downloads or script writes still fail, check **Ransomware Protection** / **Safe Files** for blocked paths.
-
-Official help: [Bitdefender — Add an Antivirus Exception](https://www.bitdefender.com/consumer/support/answer/125476/)
-
-## After whitelisting — restore missing files
-
-| Missing item | Fix |
-|--------------|-----|
-| `tools\bitcoin2john.py` | `.\scripts\setup-tools.ps1` |
-| `tools\hashcat\hashcat.exe` | Download from https://hashcat.net/hashcat/ and extract to `tools\hashcat\` |
-| `artifacts\wallet.dat` | Copy from `%APPDATA%\Dogecoin\wallet.dat` |
-| `artifacts\target-address.txt` | Copy from `target-address.txt.example` and edit |
-
-```powershell
-cd C:\Users\Jig\dogecoin-recovery
-.\scripts\setup-tools.ps1
-.\scripts\check-wallet.ps1
-```
+Once recovery is complete and funds have been moved:
+1. Delete temporary hashes and wordlists.
+2. Remove the Bitdefender exceptions if you no longer need them.

@@ -1,0 +1,7 @@
+# Core Python dependencies for Dogecoin wallet recovery
+# Note: tools/bitcoin2john.py uses a pure-Python Berkeley DB parser and requires standard library only.
+
+# Optional cryptographic acceleration for BTCRecover
+pycryptodome>=3.19.0
+base58>=2.1.1
+ecdsa>=0.18.0

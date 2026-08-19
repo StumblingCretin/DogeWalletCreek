@@ -43,7 +43,7 @@ Optional later: `tier2_variations.txt`, `tier3_typos.txt`.
 ## Step 5 — Validate and dry-run
 
 ```powershell
-cd C:\Users\Jig\dogecoin-recovery
+cd C:\path\to\dogecoin-recovery
 
 .\scripts\check-wallet.ps1
 .\scripts\run-tier1.ps1 -ListPassOnly

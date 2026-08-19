@@ -1,7 +1,7 @@
 #Requires -Version 5.1
 <#
 .SYNOPSIS
-    Run BTCRecover with tiered token lists.
+    Run BTCRecover with tiered Dogecoin token lists.
 .PARAMETER Tier
     Token tier: 1 (default), 2, or 3.
 .PARAMETER ListPassOnly
@@ -17,7 +17,6 @@ param(
     [string]$ProjectRoot = (Split-Path -Parent $PSScriptRoot)
 )
 
-$ErrorActionPreference = "Stop"
 $btcrecover = Join-Path $ProjectRoot "tools\btcrecover\btcrecover.py"
 $walletPath = Join-Path $ProjectRoot "artifacts\wallet.dat"
 $logDir = Join-Path $ProjectRoot "runs\logs"
@@ -37,71 +36,100 @@ $logFile = Join-Path $logDir "tier$Tier-$timestamp.log"
 New-Item -ItemType Directory -Force -Path $logDir, $autosaveDir | Out-Null
 
 if (-not (Test-Path $btcrecover)) {
-    Write-Error "BTCRecover not found. Clone to tools\btcrecover first."
+    Write-Host "[ERROR] BTCRecover not found at: $btcrecover`nRun .\scripts\setup-tools.ps1 first." -ForegroundColor Red
+    exit 1
 }
 
 if (-not $ListPassOnly -and -not $Restore -and -not (Test-Path $walletPath)) {
-    Write-Error "Wallet not found: $walletPath"
+    Write-Host "[ERROR] Dogecoin wallet not found at: $walletPath`nCopy your wallet.dat from %APPDATA%\Dogecoin\ to artifacts\wallet.dat" -ForegroundColor Red
+    exit 1
 }
 
 if (-not (Test-Path $tokenFile)) {
-    Write-Error "Token file not found: $tokenFile"
+    Write-Host "[ERROR] Token file not found at: $tokenFile" -ForegroundColor Red
+    exit 1
 }
 
-$args = @()
+# Locate python
+$pyCmd = "python"
+if (-not (Get-Command "python" -ErrorAction SilentlyContinue)) {
+    if (Get-Command "py" -ErrorAction SilentlyContinue) {
+        $pyCmd = "py"
+    }
+}
+
+$btcrecoverArgs = @()
 
 if ($Restore) {
-    $args += "--restore", $Restore
+    $btcrecoverArgs += "--restore", $Restore
 } else {
-    $args += "--tokenlist", $tokenFile
+    $btcrecoverArgs += "--tokenlist", $tokenFile
 
     if ($ListPassOnly) {
-        $args += "--listpass"
+        $btcrecoverArgs += "--listpass"
     } else {
-        $args += "--wallet", $walletPath
-        $args += "--autosave", $autosaveFile
+        $btcrecoverArgs += "--wallet", $walletPath
+        $btcrecoverArgs += "--autosave", $autosaveFile
 
         $addressPath = Join-Path $ProjectRoot "artifacts\target-address.txt"
         if (Test-Path $addressPath) {
             $addr = (Get-Content $addressPath -Raw).Trim()
-            if ($addr -and $addr -notmatch '^DYourKnown') {
-                $args += "--addrs", $addr
+            if ($addr -and ($addr -match '^D[1-9A-HJ-NP-Za-km-z]{25,34}$' -or $addr -match '^[9A][1-9A-HJ-NP-Za-km-z]{25,34}$')) {
+                Write-Host "Target Dogecoin address configured: $addr" -ForegroundColor Green
+                $btcrecoverArgs += "--addrs", $addr
+            } elseif ($addr -and $addr -notmatch '^DYourKnown') {
+                Write-Host "Target address note: $addr" -ForegroundColor Gray
+                $btcrecoverArgs += "--addrs", $addr
             }
         }
 
         $threads = (Get-CimInstance Win32_Processor -ErrorAction SilentlyContinue).NumberOfLogicalProcessors
         if (-not $threads) { $threads = 4 }
-        $args += "--threads", $threads
+        $btcrecoverArgs += "--threads", $threads
 
         switch ($Tier) {
             2 {
-                $args += "--typos", "1", "--typos-case", "--typos-closecase"
+                $btcrecoverArgs += "--typos", "1", "--typos-case", "--typos-closecase"
             }
             3 {
                 $leetMap = Join-Path $ProjectRoot "typos\leet.txt"
-                $args += "--typos", "2", "--typos-case", "--typos-closecase"
+                $btcrecoverArgs += "--typos", "2", "--typos-case", "--typos-closecase"
                 if (Test-Path $leetMap) {
-                    $args += "--typos-map", $leetMap
+                    $btcrecoverArgs += "--typos-map", $leetMap
                 }
             }
         }
     }
 }
 
-Write-Host "=== BTCRecover Tier $Tier ===" -ForegroundColor Cyan
-Write-Host "Command: python $btcrecover $($args -join ' ')"
+Write-Host "=== Dogecoin BTCRecover Tier $Tier ===" -ForegroundColor Cyan
+Write-Host "Command: $pyCmd $btcrecover $($btcrecoverArgs -join ' ')"
+Write-Host ""
+
+$ErrorActionPreference = "Continue"
 
 if ($ListPassOnly) {
-    $output = & python $btcrecover @args 2>&1
-    $output | Tee-Object -FilePath $logFile
-    $count = ($output | Measure-Object -Line).Lines
-    Write-Host "`nCandidate count: $count" -ForegroundColor Yellow
-    if ($count -gt 1000000) {
-        Write-Host "WARNING: Over 1M candidates — consider tightening tokens before running." -ForegroundColor Red
+    # Stream live to screen and log file
+    & $pyCmd $btcrecover @btcrecoverArgs 2>&1 | Tee-Object -FilePath $logFile
+    
+    if (Test-Path $logFile) {
+        $count = 0
+        foreach ($line in [System.IO.File]::ReadLines($logFile)) {
+            if ($line -notmatch '^\s*Starting btcrecover' -and 
+                $line -notmatch '^\s*Loaded ' -and 
+                $line -notmatch 'password combinations' -and
+                $line.Trim() -ne "") {
+                $count++
+            }
+        }
+        Write-Host "`nTotal Candidate Passwords: $count" -ForegroundColor Yellow
+        if ($count -gt 500000) {
+            Write-Host "[NOTE] Over 500k candidates. Tier 1 is best kept under 50k for fast CPU testing." -ForegroundColor Yellow
+        }
     }
 } else {
-    & python $btcrecover @args 2>&1 | Tee-Object -FilePath $logFile
-    Write-Host "Log saved: $logFile"
+    & $pyCmd $btcrecover @btcrecoverArgs 2>&1 | Tee-Object -FilePath $logFile
+    Write-Host "`nLog saved: $logFile"
     if (Test-Path $autosaveFile) {
         Write-Host "Autosave: $autosaveFile (resume with -Restore $autosaveFile)"
     }

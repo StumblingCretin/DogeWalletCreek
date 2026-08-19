@@ -36,7 +36,7 @@ typos/         optional typo-map files
 ### GPU path (recommended — RTX 2070)
 
 ```batch
-cd C:\Users\Jig\dogecoin-recovery
+cd C:\path\to\dogecoin-recovery
 
 REM Install hashcat once (requires 7-Zip)
 powershell -ExecutionPolicy Bypass -File scripts\install-hashcat.ps1
@@ -54,7 +54,7 @@ GPU flags: `-D 2 -w 4 -O` — GPU-only, max workload, optimized kernels for wall
 ### CPU path (BTCRecover direct)
 
 ```powershell
-cd C:\Users\Jig\dogecoin-recovery
+cd C:\path\to\dogecoin-recovery
 
 # 1. Validate wallet copy exists and looks encrypted
 .\scripts\check-wallet.ps1
@@ -89,9 +89,12 @@ run-gpu-recovery.bat mask KnownPrefix?d?d?d?d
 - [ ] If no match: tried hashcat mask with known prefix/suffix
 - [ ] On success: moved funds to a new wallet; secured or deleted sensitive files
 
-## Bitdefender / antivirus
+## Antivirus & Defender Exclusions
 
-If Bitdefender blocks scripts or downloads, see **[BITDEFENDER-WHITELIST.md](BITDEFENDER-WHITELIST.md)** for exact exclusion paths.
+Recovery utilities (Hashcat, BTCRecover, bitcoin2john) are often flagged as false positives by antivirus software due to their cryptographic testing and extraction code.
+
+- For **Windows Defender / Windows Security**, see **[DEFENDER-WHITELIST.md](DEFENDER-WHITELIST.md)**.
+- For **Bitdefender**, see **[BITDEFENDER-WHITELIST.md](BITDEFENDER-WHITELIST.md)**.
 
 ## Security
 
